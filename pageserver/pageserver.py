@@ -2,6 +2,7 @@
   A trivial web server in Python.
 
   Based largely on https://docs.python.org/3.4/howto/sockets.html
+  ra
   This trivial implementation is not robust:  We have omitted decent
   error handling and many other things to keep the illustration as simple
   as possible.
@@ -12,7 +13,7 @@
   located in ./pages  (where '.' is the directory from which this
   program is run).
 """
-
+import os
 import config    # Configure from .ini files and command line
 import logging   # Better than print statements
 logging.basicConfig(format='%(levelname)s:%(message)s',
@@ -90,9 +91,30 @@ def respond(sock):
     log.info("Request was {}\n***\n".format(request))
 
     parts = request.split()
-    if len(parts) > 1 and parts[0] == "GET":
+
+    
+    #in final version change to deny by defau
+    valid = False
+    #parts[1] is the requesthe '\' from parts
+    #split t
+    if parts[1] in invalid_input:	
+    	transmit(STATUS_FORBIDDEN,sock)
+    	print ("Naughty Boy")
+    	sock.close();
+
+    if(parts[1].endswith('.html') or parts[1].endswith('.css')):
+      valid = True
+
+    if (len(parts) > 1 and parts[0] == "GET" and valid == True):
         transmit(STATUS_OK, sock)
-        transmit(CAT, sock)
+        try:
+            files = open(docroot + parts[1])
+            print(files)
+            for line in files:
+              transmit(line, sock)
+        except FileNotFoundError:
+          log.info("File not found")
+          transmit(STATUS_NOT_FOUND,sock)  
     else:
         log.info("Unhandled request: {}".format(request))
         transmit(STATUS_NOT_IMPLEMENTED, sock)
@@ -101,6 +123,9 @@ def respond(sock):
     sock.shutdown(socket.SHUT_RDWR)
     sock.close()
     return
+
+invalid_input = ["~" , "..", "//"]
+valid_files = [".html", ".css"]
 
 
 def transmit(msg, sock):
@@ -132,12 +157,14 @@ def get_options():
                          " Ports 0..1000 are reserved \n" +
                          "by the operating system").format(options.port))
 
+	 
     return options
 
-
 def main():
+    global docroot
     options = get_options()
     port = options.PORT
+    docroot = options.DOCROOT
     if options.DEBUG:
         log.setLevel(logging.DEBUG)
     sock = listen(port)
