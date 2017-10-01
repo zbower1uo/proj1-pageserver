@@ -91,25 +91,25 @@ def respond(sock):
     log.info("Request was {}\n***\n".format(request))
 
     parts = request.split()
-
-    
-    #in final version change to deny by defau
     valid = False
-    #parts[1] is the requesthe '\' from parts
-    #split t
-    if parts[1] in invalid_input:	
-    	transmit(STATUS_FORBIDDEN,sock)
-    	print ("Naughty Boy")
-    	sock.close();
 
-    if(parts[1].endswith('.html') or parts[1].endswith('.css')):
+    if parts[1] in invalid_input: 
+      transmit(STATUS_FORBIDDEN,sock)
+
+    if(parts[1].endswith(valid_files)):
       valid = True
+    else:
+      transmit(STATUS_FORBIDDEN, sock)
+
+    filePath = docroot + parts[1]
+
+    if(any(s in filePath for s in invalid_input)):
+      transmit(STATUS_FORBIDDEN, sock)
 
     if (len(parts) > 1 and parts[0] == "GET" and valid == True):
         transmit(STATUS_OK, sock)
         try:
-            files = open(docroot + parts[1])
-            print(files)
+            files = open(filePath)
             for line in files:
               transmit(line, sock)
         except FileNotFoundError:
@@ -124,8 +124,8 @@ def respond(sock):
     sock.close()
     return
 
-invalid_input = ["~" , "..", "//"]
-valid_files = [".html", ".css"]
+invalid_input = ["~" , "..","//"]
+valid_files = ".html", ".css"
 
 
 def transmit(msg, sock):
@@ -157,7 +157,7 @@ def get_options():
                          " Ports 0..1000 are reserved \n" +
                          "by the operating system").format(options.port))
 
-	 
+   
     return options
 
 def main():
