@@ -92,10 +92,7 @@ def respond(sock):
 
     parts = request.split()
     valid = False
-
-    if parts[1] in invalid_input: 
-      transmit(STATUS_FORBIDDEN,sock)
-
+    
     if(parts[1].endswith(valid_files)):
       valid = True
     else:
